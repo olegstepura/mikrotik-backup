@@ -1,0 +1,14 @@
+services:
+  mikrotik-backup:
+    image: ghcr.io/olegstepura/mikrotik-backup:main
+    container_name: mt-backup-runner
+    restart: "no"
+    env_file:
+      - .env
+    environment:
+      - TZ=Europe/Prague
+      - KEEP_LAST_N=7
+      - KEEP_MONTHS=6
+    volumes:
+      - ./ssh_keys:/ssh
+      - ./archives:/backups
