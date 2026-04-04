@@ -3,14 +3,13 @@
 # Define the internal backup root (standardized for the container)
 BKP_ROOT="/backups"
 
-# --- NEW: List backups if no arguments provided ---
 if [ -z "$1" ]; then
     echo "=================================================================="
     echo "📂 AVAILABLE BACKUPS"
     echo "=================================================================="
-    # Find all .7z files, sort them by folder (IP) and then by date (newest first)
     if [ -d "$BKP_ROOT" ]; then
-        find "$BKP_ROOT" -name "*.7z" | sed "s|$BKP_ROOT/||" | sort -t/ -k1,1 -k2,2r
+        # Lists backups as: IP_ADDRESS/bkp_YYYY-MM-DD_HH-MM-SS.7z
+        find "$BKP_ROOT" -name "*.7z" | sed "s|$BKP_ROOT/||" | sort
     else
         echo "❌ Error: Backup directory $BKP_ROOT not found."
     fi
@@ -19,7 +18,6 @@ if [ -z "$1" ]; then
     exit 0
 fi
 
-# --- Extraction Logic ---
 ARCHIVE_PATH="$1"
 # Ensure we are looking in the /backups mount
 [[ "$ARCHIVE_PATH" != /backups/* ]] && ARCHIVE_PATH="$BKP_ROOT/$ARCHIVE_PATH"

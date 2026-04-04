@@ -53,7 +53,7 @@ Use a temporary Docker container to easily unpack your archives without needing 
 Run this command from the directory containing your `.env` file, replacing the path at the very end with your actual archive name (running without backup name will list all backups):
 
 ```bash
-docker-compose run --rm mikrotik-backup /app/extract.sh 192.168.88.1/bkp_192.168.88.1_2026-01-01_00-00-59.7z
+docker-compose run --rm mikrotik-backup /app/extract.sh 192.168.88.1/bkp_2026-01-01_00-00-59.7z
 ```
 
 This creates a neatly organized folder right next to your archive containing:

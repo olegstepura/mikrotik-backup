@@ -16,7 +16,7 @@ IPS=($MIKROTIK_IPS)
 KEEP_LAST_N=${KEEP_LAST_N:-7}
 KEEP_MONTHS=${KEEP_MONTHS:-6}
 
-# 1. SSH Key Check / Generation
+# SSH Key Check / Generation
 if [ ! -f "$KEY_FILE" ]; then
     echo "=================================================================="
     echo "🔑 INITIAL SETUP: SSH KEY GENERATION"
@@ -41,16 +41,17 @@ fi
 DATE=$(date +%Y-%m-%d_%H-%M-%S)
 SSH_OPTS=(-q -o LogLevel=ERROR -o ConnectTimeout=10 -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile="$KNOWN_HOSTS" -i "$KEY_FILE")
 
-# 2. Process IP Array
+# Process IP Array
 for R_HOST in "${IPS[@]}"; do
-    echo "=================================================================="
+echo "=================================================================="
     echo "🚀 Backing up: $R_HOST"
     
     DEST_DIR="${BACKUP_ROOT}/${R_HOST}"
     mkdir -p "$DEST_DIR"
-    BKP_NAME="bkp_${R_HOST}_${DATE}"
+    
+    BKP_NAME="bkp_${DATE}"
 
-    # Generate a temporary 16-char random password to secure the file on the router
+    # Generate a temporary 16-char random password
     TEMP_MT_PASS=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 16)
     echo "$TEMP_MT_PASS" > "${DEST_DIR}/${BKP_NAME}_router_pass.txt"
 
