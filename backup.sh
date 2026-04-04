@@ -54,13 +54,17 @@ for R_HOST in "${IPS[@]}"; do
     TEMP_MT_PASS=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 16)
     echo "$TEMP_MT_PASS" > "${DEST_DIR}/${BKP_NAME}_router_pass.txt"
 
-    # Generate the binary backup securely on the router
+    # Generate the binary backup securely on the router (Silenced output)
     ssh "${SSH_OPTS[@]}" "${R_USER}@${R_HOST}" \
-        "/system backup save name=${BKP_NAME} password=${TEMP_MT_PASS}"
+        "/system backup save name=${BKP_NAME} password=${TEMP_MT_PASS}" >/dev/null 2>&1
     
-    # Try RouterOS v7 export. If it fails, fallback to v6 export.
-    ssh "${SSH_OPTS[@]}" "${R_USER}@${R_HOST}" "/export show-sensitive file=${BKP_NAME}" 2>/dev/null || \
-    ssh "${SSH_OPTS[@]}" "${R_USER}@${R_HOST}" "/export file=${BKP_NAME}" 2>/dev/null
+    # Try RouterOS v7 export. Capture the output to check for v6 syntax errors.
+    EXPORT_OUT=$(ssh "${SSH_OPTS[@]}" "${R_USER}@${R_HOST}" "/export show-sensitive file=${BKP_NAME}" 2>&1)
+    
+    # If the router complains about the syntax, it is likely v6. Run the v6 export fallback.
+    if echo "$EXPORT_OUT" | grep -qi -E "expected end of command|bad command|syntax error"; then
+        ssh "${SSH_OPTS[@]}" "${R_USER}@${R_HOST}" "/export file=${BKP_NAME}" >/dev/null 2>&1
+    fi
     
     sleep 5
 
@@ -74,7 +78,7 @@ for R_HOST in "${IPS[@]}"; do
 
         # Cleanup Router & Local Temp
         rm -f "${DEST_DIR}/${BKP_NAME}.backup" "${DEST_DIR}/${BKP_NAME}.rsc" "${DEST_DIR}/${BKP_NAME}_router_pass.txt"
-        ssh "${SSH_OPTS[@]}" "${R_USER}@${R_HOST}" "/file remove [find name~\"${BKP_NAME}\"]"
+        ssh "${SSH_OPTS[@]}" "${R_USER}@${R_HOST}" "/file remove [find name~\"${BKP_NAME}\"]" >/dev/null 2>&1
 
         # GFS Retention
         cd "$DEST_DIR" || continue
