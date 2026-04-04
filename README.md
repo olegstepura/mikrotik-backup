@@ -1,27 +1,29 @@
 # MikroTik Backup Bot (Docker)
 
-A lightweight, high-security "Pull" backup system for MikroTik devices.
+A lightweight, high-security "Pull" backup system for MikroTik devices. Seamlessly supports both RouterOS v6 and v7.
 
 ## 💡 The Concept
-* **Pull-based**: The server initiates the connection, keeping the routers secure.
-* **Single Key**: One global SSH key for all your routers (Key-based auth).
-* **Double Secure**: Binary `.backup` and plaintext `.rsc` config are combined into an encrypted 7-Zip archive.
+* **Pull-based**: The server initiates the connection, keeping the routers secure from pushing malicious payloads.
+* **Modern Key-Based Auth**: Uses Ed25519 SSH keys with strict Trust-On-First-Use (TOFU) host verification.
+* **Double Secure**: Binary `.backup` files are secured natively on the router with a temporary, random password before download.
+* **Encrypted at Rest**: Both the `.backup` and plaintext `.rsc` config are combined into an AES-256 encrypted 7-Zip archive.
 
 ## 🚀 Setup Instructions
 
 ### 1. Initialization
 Create a `.env` file in the same directory as your `docker-compose.yml` and define your variables:
 
-```
-BACKUP_PASSWORD=YourSecurePassword
-MIKROTIK_IPS=192.168.88.1 10.0.0.5
+```env
+BACKUP_USER=backup
+BACKUP_PASSWORD=YourSuperSecureGlobal7zPassword
+MIKROTIK_IPS=192.168.88.1 10.0.0.5 172.16.0.1
 ```
 
 Then run:
 
 `docker-compose up`
 
-**Check the logs:** The container will generate a new SSH key, scan the host keys to establish a trust baseline, and **print a pre-formatted MikroTik command** to your terminal.
+**Check the logs:** The container will generate a new SSH key and print a pre-formatted MikroTik command to your terminal. **(Note: Host keys are automatically trusted and pinned on the first successful connection).**
 
 ### 2. MikroTik Configuration (Line-by-Line)
 Copy the commands from the terminal logs and paste them into your MikroTik Terminal **line by line**. 
@@ -29,7 +31,7 @@ Copy the commands from the terminal logs and paste them into your MikroTik Termi
 When you run the second command, the router will securely prompt you to create a password for the new backup user.
 
 ```routeros
-/user group add name=backup-group policy=ssh,read,test,sensitive;
+/user group add name=backup-group policy=ssh,read,write,ftp,sensitive,test,password,policy;
 /user add name=backup group=backup-group comment="Backup Bot";
 /user ssh-keys add user=backup key="ssh-ed25519 AAAA...";
 ```
@@ -45,6 +47,15 @@ docker-compose up
 
 Check the `./archives` folder for your encrypted `.7z` files.
 
+## 📦 Extracting Archives
+Because the binary `.backup` file is secured with a temporary, randomized password during generation, you will need that password to restore it via WinBox/Terminal. 
+
+Use the included `extract.sh` script to easily unpack your archives. It will automatically read your global `BACKUP_PASSWORD` from your `.env` file.
+
+```bash
+./extract.sh ./archives/192.168.88.1/bkp_192.168.88.1_2026-01-01_00-00-01.7z
+```
+
 ## ♻️ Rotation & Retention
 The script manages disk space using a GFS (Grandfather-Father-Son) policy per IP folder:
 * **KEEP_LAST_N**: Keeps the last **7** backups (default).
@@ -53,12 +64,15 @@ The script manages disk space using a GFS (Grandfather-Father-Son) policy per IP
 
 ## ⏰ Automation
 Add this to your host's crontab to run every night at 3:00 AM:
+*(Note: If using Podman, replace `docker` with `podman` in your cronjob).*
 
 ```cron
 0 3 * * * docker start -a mt-backup-runner >> /var/log/mikrotik-backup.log 2>&1
 ```
 
 ## 🔒 Security Summary
-* **SSH Keys**: No login passwords stored or sent over the network.
-* **Restricted User**: The `backup` user has no permission to change settings or reboot.
-* **7z Encryption**: All backups are locked in AES-256 archives with hidden filenames.
+* **SSH Keys & TOFU**: No login passwords stored or sent over the network. Strict Host Key Checking (`accept-new`) prevents Man-in-the-Middle (MitM) attacks.
+* **Restricted User**: The `backup` user belongs to a custom group tailored for backup operations.
+* **On-Disk Router Security**: Binary backups are never left unencrypted on the router's flash storage.
+* **7z Encryption**: All backups are locked in AES-256 archives with hidden filenames (`-mhe=on`).
+* **Secrets Management**: Configuration is loaded securely via a `.env` file, keeping plaintext passwords out of version control and process lists.
