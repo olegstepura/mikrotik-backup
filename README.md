@@ -23,8 +23,10 @@ Then run:
 
 **Check the logs:** The container will generate a new SSH key, scan the host keys to establish a trust baseline, and **print a pre-formatted MikroTik command** to your terminal.
 
-### 2. MikroTik Configuration (100% Copy-Paste)
-Copy the command block from the terminal logs and paste it into your MikroTik Terminal. It looks like this:
+### 2. MikroTik Configuration (Line-by-Line)
+Copy the commands from the terminal logs and paste them into your MikroTik Terminal **line by line**. 
+
+When you run the second command, the router will securely prompt you to create a password for the new backup user.
 
 ```routeros
 /user group add name=backup-group policy=ssh,read,test,sensitive;

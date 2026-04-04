@@ -26,7 +26,8 @@ if [ ! -f "$KEY_FILE" ]; then
     
     echo "✅ New SSH key generated!"
     echo ""
-    echo "Copy and paste this ENTIRE block into your MikroTik terminal:"
+    echo "⚠️  IMPORTANT: Copy and paste these commands LINE BY LINE into your MikroTik terminal."
+    echo "When you run the second command, the router will prompt you to type a password."
     echo "------------------------------------------------------------------"
     echo "/user group add name=backup-group policy=ssh,read,test,sensitive;"
     echo "/user add name=$R_USER group=backup-group comment=\"Backup Bot\";"
@@ -61,21 +62,21 @@ for R_HOST in "${IPS[@]}"; do
     TEMP_MT_PASS=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 16)
     echo "$TEMP_MT_PASS" > "${DEST_DIR}/${BKP_NAME}_router_pass.txt"
 
-    # Generate the backup securely on the router
-    ssh -o ConnectTimeout=10 -o UserKnownHostsFile="$KNOWN_HOSTS" -i "$KEY_FILE" "${R_USER}@${R_HOST}" \
+    # Generate the backup securely on the router (using accept-new for TOFU)
+    ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile="$KNOWN_HOSTS" -i "$KEY_FILE" "${R_USER}@${R_HOST}" \
         "/system backup save name=${BKP_NAME} password=${TEMP_MT_PASS}; /export show-sensitive file=${BKP_NAME}"
     
     sleep 5
 
     # Pull the files
-    scp -o UserKnownHostsFile="$KNOWN_HOSTS" -i "$KEY_FILE" "${R_USER}@${R_HOST}:${BKP_NAME}.*" "$DEST_DIR/"
+    scp -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile="$KNOWN_HOSTS" -i "$KEY_FILE" "${R_USER}@${R_HOST}:${BKP_NAME}.*" "$DEST_DIR/"
 
     # Pack everything (including the text file containing the router-level backup password)
     7z a -p"${ZIP_PASS}" -mhe=on "${DEST_DIR}/${BKP_NAME}.7z" "${DEST_DIR}/${BKP_NAME}.backup" "${DEST_DIR}/${BKP_NAME}.rsc" "${DEST_DIR}/${BKP_NAME}_router_pass.txt" > /dev/null
 
     # Cleanup Router & Local Temp
     rm -f "${DEST_DIR}/${BKP_NAME}.backup" "${DEST_DIR}/${BKP_NAME}.rsc" "${DEST_DIR}/${BKP_NAME}_router_pass.txt"
-    ssh -o UserKnownHostsFile="$KNOWN_HOSTS" -i "$KEY_FILE" "${R_USER}@${R_HOST}" "/file remove [find name~\"${BKP_NAME}\"]"
+    ssh -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile="$KNOWN_HOSTS" -i "$KEY_FILE" "${R_USER}@${R_HOST}" "/file remove [find name~\"${BKP_NAME}\"]"
 
     # GFS Retention
     cd "$DEST_DIR" || continue
