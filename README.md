@@ -48,13 +48,18 @@ docker-compose up
 Check the `./archives` folder for your encrypted `.7z` files.
 
 ## 📦 Extracting Archives
-Because the binary `.backup` file is secured with a temporary, randomized password during generation, you will need that password to restore it via WinBox/Terminal. 
+Use a temporary Docker container to easily unpack your archives without needing to install `7zip` on your host machine. 
 
-Use the included `extract.sh` script to easily unpack your archives. It will automatically read your global `BACKUP_PASSWORD` from your `.env` file.
+Run this command from the directory containing your `.env` file, replacing the path at the very end with your actual archive name (running without backup name will list all backups):
 
 ```bash
-./extract.sh ./archives/192.168.88.1/bkp_192.168.88.1_2026-01-01_00-00-01.7z
+docker-compose run --rm mikrotik-backup /app/extract.sh 192.168.88.1/bkp_192.168.88.1_2026-01-01_00-00-59.7z
 ```
+
+This creates a neatly organized folder right next to your archive containing:
+1. Your `.rsc` plaintext config.
+2. Your `.backup` binary file.
+3. A `_router_pass.txt` file containing the temporary password required to restore the `.backup` file to the router.
 
 ## ♻️ Rotation & Retention
 The script manages disk space using a GFS (Grandfather-Father-Son) policy per IP folder:
