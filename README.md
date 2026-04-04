@@ -11,10 +11,14 @@ A lightweight, high-security "Pull" backup system for MikroTik devices.
 
 ### 1. Initialization
 Create a `.env` file in the same directory as your `docker-compose.yml` and define your variables:
-`BACKUP_PASSWORD=YourSecurePassword`
-`MIKROTIK_IPS=192.168.88.1 10.0.0.5`
+
+```
+BACKUP_PASSWORD=YourSecurePassword
+MIKROTIK_IPS=192.168.88.1 10.0.0.5
+```
 
 Then run:
+
 `docker-compose up`
 
 **Check the logs:** The container will generate a new SSH key, scan the host keys to establish a trust baseline, and **print a pre-formatted MikroTik command** to your terminal.
@@ -32,7 +36,10 @@ Copy the command block from the terminal logs and paste it into your MikroTik Te
 
 ### 3. Verification
 Run the container again to perform the first backup:
-`docker-compose up`
+
+```bash
+docker-compose up
+```
 
 Check the `./archives` folder for your encrypted `.7z` files.
 
@@ -44,7 +51,10 @@ The script manages disk space using a GFS (Grandfather-Father-Son) policy per IP
 
 ## ⏰ Automation
 Add this to your host's crontab to run every night at 3:00 AM:
-`0 3 * * * docker start -a mt-backup-runner >> /var/log/mikrotik-backup.log 2>&1`
+
+```cron
+0 3 * * * docker start -a mt-backup-runner >> /var/log/mikrotik-backup.log 2>&1
+```
 
 ## 🔒 Security Summary
 * **SSH Keys**: No login passwords stored or sent over the network.
