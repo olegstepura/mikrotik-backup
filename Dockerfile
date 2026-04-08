@@ -1,10 +1,10 @@
+FROM alpine:3
+
 ARG SUPERCRONIC_VERSION="0.2.44"
 ARG SUPERCRONIC_ARCH="linux-amd64"
 
-FROM alpine:3
-
 # Install bash, ssh client, and 7zip
-RUN apk update && apk add --no-cache bash openssh-client 7zip tzdata
+RUN apk update && apk add --no-cache bash openssh-client 7zip tzdata curl
 
 ENV \
   SUPERCRONIC_URL="https://github.com/aptible/supercronic/releases/download/v${SUPERCRONIC_VERSION}/supercronic-${SUPERCRONIC_ARCH}" \
