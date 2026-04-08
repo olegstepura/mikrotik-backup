@@ -67,13 +67,23 @@ The script manages disk space using a GFS (Grandfather-Father-Son) policy per IP
 * **KEEP_MONTHS**: Keeps **1** backup per month for **6** months (default).
 * Older files are automatically purged during every run.
 
-## ⏰ Automation
-Add this to your host's crontab to run every night at 3:00 AM:
-*(Note: If using Podman, replace `docker` with `podman` in your cronjob).*
+## ⏰ Automation (Built-in Scheduling)
 
-```cron
-0 3 * * * docker start -a mt-backup-runner >> /var/log/mikrotik-backup.log 2>&1
+You do not need host-level crontabs! The container has a built-in lightweight scheduler (Supercronic). 
+
+To run the container continuously in the background and trigger backups automatically, simply add the `CRON_SCHEDULE` environment variable to your `.env` file (e.g., run every night at 3:00 AM):
+
+```env
+CRON_SCHEDULE=0 3 * * *
 ```
+
+Then, ensure your `docker-compose.yml` has `restart: unless-stopped` and bring it up in detached mode:
+
+```bash
+docker-compose up -d
+```
+
+*(If `CRON_SCHEDULE` is omitted, the container will run exactly once and exit, allowing you to manually trigger it or use external orchestration).*
 
 ## 🔒 Security Summary
 * **SSH Keys & TOFU**: No login passwords stored or sent over the network. Strict Host Key Checking (`accept-new`) prevents Man-in-the-Middle (MitM) attacks.
