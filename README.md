@@ -104,7 +104,7 @@ If you are running the container in daemon mode (using `CRON_SCHEDULE`), you can
 Simply add your DSN to your `.env` file or `docker-compose.yml`:
 
 ```env
-SENTRY_DSN=[https://yourPublicKey@o0.ingest.sentry.io/0](https://yourPublicKey@o0.ingest.sentry.io/0)
+SENTRY_DSN=https://yourPublicKey@o0.ingest.sentry.io/0
 ```
 
 *(Optional: You can also define `SENTRY_ENVIRONMENT` and `SENTRY_RELEASE` for deeper context).*
