@@ -2,6 +2,7 @@ services:
   mikrotik-backup:
     image: ghcr.io/olegstepura/mikrotik-backup:main
     container_name: mt-backup-runner
+    # Use "unless-stopped" if using CRON_SCHEDULE, otherwise use "no"
     restart: "no"
     env_file:
       - .env
@@ -9,6 +10,13 @@ services:
       - TZ=Europe/Prague
       - KEEP_LAST_N=7
       - KEEP_MONTHS=6
+      # Uncomment to enable daemon mode with built-in scheduling
+      # - CRON_SCHEDULE=0 3 * * *
+      # Uncomment to trigger a backup immediately when the container starts
+      # - RUN_ON_STARTUP=true
+      # SENTRY INTEGRATION (Daemon mode only)
+      # - SENTRY_DSN=https://yourPublicKey@o0.ingest.sentry.io/0
+      # - SENTRY_ENVIRONMENT=production
     volumes:
       - ./ssh_keys:/ssh
       - ./archives:/backups
