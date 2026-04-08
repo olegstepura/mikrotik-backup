@@ -16,6 +16,12 @@ IPS=($MIKROTIK_IPS)
 KEEP_LAST_N=${KEEP_LAST_N:-7}
 KEEP_MONTHS=${KEEP_MONTHS:-6}
 
+# Fail loudly if no IPs are configured
+if [ ${#IPS[@]} -eq 0 ]; then
+    echo "❌ ERROR: MIKROTIK_IPS is empty or not set. Please configure your target IP addresses."
+    exit 1
+fi
+
 # SSH Key Check / Generation
 if [ ! -f "$KEY_FILE" ]; then
     echo "=================================================================="
