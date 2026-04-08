@@ -85,6 +85,31 @@ docker-compose up -d
 
 *(If `CRON_SCHEDULE` is omitted, the container will run exactly once and exit, allowing you to manually trigger it or use external orchestration).*
 
+### ⚡ Immediate Run / Testing
+If you are running the container as a daemon with a cron schedule, you can force it to run immediately upon startup before the cron scheduler takes over. Add this to your `.env` file:
+
+```env
+RUN_ON_STARTUP=true
+```
+
+Alternatively, you can trigger a backup on-demand inside an already running background container at any time:
+
+```bash
+docker exec -it mt-backup-runner /app/backup.sh
+```
+
+### 🚨 Error Monitoring with Sentry
+If you are running the container in daemon mode (using `CRON_SCHEDULE`), you can automatically report backup script failures directly to Sentry. 
+
+Simply add your DSN to your `.env` file or `docker-compose.yml`:
+
+```env
+SENTRY_DSN=[https://yourPublicKey@o0.ingest.sentry.io/0](https://yourPublicKey@o0.ingest.sentry.io/0)
+```
+
+*(Optional: You can also define `SENTRY_ENVIRONMENT` and `SENTRY_RELEASE` for deeper context).*
+
+
 ## 🔒 Security Summary
 * **SSH Keys & TOFU**: No login passwords stored or sent over the network. Strict Host Key Checking (`accept-new`) prevents Man-in-the-Middle (MitM) attacks.
 * **Restricted User**: The `backup` user belongs to a custom group tailored for backup operations.
