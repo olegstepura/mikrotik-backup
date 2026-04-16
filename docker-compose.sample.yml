@@ -10,13 +10,23 @@ services:
       - TZ=Europe/Prague
       - KEEP_LAST_N=7
       - KEEP_MONTHS=6
+      - BACKUP_PASSWORD_FILE=/run/secrets/backup_password
       # Uncomment to enable daemon mode with built-in scheduling
       # - CRON_SCHEDULE=0 3 * * *
       # Uncomment to trigger a backup immediately when the container starts
       # - RUN_ON_STARTUP=true
       # SENTRY INTEGRATION (Daemon mode only)
-      # - SENTRY_DSN=https://yourPublicKey@o0.ingest.sentry.io/0
+      # - SENTRY_DSN_FILE=/run/secrets/sentry_dsn
       # - SENTRY_ENVIRONMENT=production
+    secrets:
+      - backup_password
+      # - sentry_dsn
     volumes:
       - ./ssh_keys:/ssh
       - ./archives:/backups
+
+secrets:
+  backup_password:
+    file: ./backup_password.txt
+  # sentry_dsn:
+  #   file: ./sentry_dsn.txt

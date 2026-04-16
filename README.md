@@ -15,8 +15,13 @@ Create a `.env` file in the same directory as your `docker-compose.yml` and defi
 
 ```env
 BACKUP_USER=backup
-BACKUP_PASSWORD=YourSuperSecureGlobal7zPassword
 MIKROTIK_IPS=192.168.88.1 10.0.0.5 172.16.0.1
+```
+
+Store your 7-Zip encryption password in a separate file (see [Docker Secrets Support](#-docker-secrets-support)):
+
+```bash
+echo "YourSuperSecureGlobal7zPassword" > backup_password.txt
 ```
 
 Then run:
@@ -101,18 +106,33 @@ docker exec -it mt-backup-runner /app/backup.sh
 ### 🚨 Error Monitoring with Sentry
 If you are running the container in daemon mode (using `CRON_SCHEDULE`), you can automatically report backup script failures directly to Sentry. 
 
-Simply add your DSN to your `.env` file or `docker-compose.yml`:
+Store your DSN in a secret file (recommended) or add it directly to your `.env` file:
 
-```env
-SENTRY_DSN=https://yourPublicKey@o0.ingest.sentry.io/0
+```bash
+echo "https://yourPublicKey@o0.ingest.sentry.io/0" > sentry_dsn.txt
 ```
+
+Then uncomment the corresponding lines in `docker-compose.yml` (see [Docker Secrets Support](#-docker-secrets-support)).
 
 *(Optional: You can also define `SENTRY_ENVIRONMENT` and `SENTRY_RELEASE` for deeper context).*
 
+
+## 🔐 Docker Secrets Support
+
+Sensitive variables support a `_FILE` variant for [Docker Compose secrets](https://docs.docker.com/compose/how-tos/use-secrets/). Instead of passing the value directly as an environment variable, point to a file containing the secret. The entrypoint reads the file and exports its contents as the standard variable automatically.
+
+| Standard Variable  | File Variant           |
+|--------------------|------------------------|
+| `BACKUP_PASSWORD`  | `BACKUP_PASSWORD_FILE` |
+| `SENTRY_DSN`       | `SENTRY_DSN_FILE`      |
+
+This approach keeps secrets out of environment variables, shell history, and `docker inspect` output. It works with both Docker Compose file-based secrets and Docker Swarm external secrets.
+
+If both the standard variable and the `_FILE` variant are defined, the `_FILE` variant takes precedence.
 
 ## 🔒 Security Summary
 * **SSH Keys & TOFU**: No login passwords stored or sent over the network. Strict Host Key Checking (`accept-new`) prevents Man-in-the-Middle (MitM) attacks.
 * **Restricted User**: The `backup` user belongs to a custom group tailored for backup operations.
 * **On-Disk Router Security**: Binary backups are never left unencrypted on the router's flash storage.
 * **7z Encryption**: All backups are locked in AES-256 archives with hidden filenames (`-mhe=on`).
-* **Secrets Management**: Configuration is loaded securely via a `.env` file, keeping plaintext passwords out of version control and process lists.
+* **Secrets Management**: Configuration is loaded securely via a `.env` file or Docker secrets (`_FILE` variants), keeping plaintext passwords out of version control and process lists.
